@@ -1,33 +1,14 @@
 <?php
+
 require_once __DIR__ . '/class/Product.php';
 require_once __DIR__ . '/class/Customer.php';
 require_once __DIR__ . '/class/Order.php';
 
+// Buat instance (boleh dipakai di view jika diperlukan)
 $product = new Product();
 $customer = new Customer();
 $order = new Order();
-
-// handle aksi CRUD sederhana langsung dari index
-if (isset($_POST['create_product'])) {
-    $product->addProduct($_POST['name'], $_POST['category_id'], $_POST['description'], $_POST['price'], $_POST['stock']);
-}
-if (isset($_POST['create_customer'])) {
-    $customer->addCustomer($_POST['name'], $_POST['email'], $_POST['phone']);
-}
-if (isset($_POST['create_order'])) {
-    $order->addOrder($_POST['customer_id'], $_POST['total']);
-}
-if (isset($_GET['delete_product'])) {
-    $product->deleteProduct($_GET['delete_product']);
-}
-if (isset($_GET['delete_customer'])) {
-    $customer->deleteCustomer($_GET['delete_customer']);
-}
-if (isset($_GET['delete_order'])) {
-    $order->deleteOrder($_GET['delete_order']);
-}
 ?>
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -37,27 +18,30 @@ if (isset($_GET['delete_order'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <?php include 'view/partials/header.php'; ?>
+    <?php include __DIR__ . '/view/partials/header.php'; ?>
     <main class="container py-4">
         <h2 class="mb-4 fw-bold text-primary">Sistem Toko Elektronik</h2>
 
+        <!-- Navigasi antar halaman -->
         <nav class="mb-4">
+            <a href="?page=home" class="btn btn-outline-primary btn-sm">Home</a>
             <a href="?page=products" class="btn btn-outline-primary btn-sm">Produk</a>
             <a href="?page=customers" class="btn btn-outline-primary btn-sm">Pelanggan</a>
             <a href="?page=orders" class="btn btn-outline-primary btn-sm">Pesanan</a>
         </nav>
 
         <?php
-        if (isset($_GET['page'])) {
-            $page = $_GET['page'];
-            if ($page == 'products') include 'view/products.php';
-            elseif ($page == 'customers') include 'view/customers.php';
-            elseif ($page == 'orders') include 'view/orders.php';
+        // Routing halaman
+        $page = $_GET['page'] ?? 'home';
+        $viewPath = __DIR__ . '/view/' . $page . '.php';
+
+        if (file_exists($viewPath)) {
+            include $viewPath;
         } else {
-            include 'view/home.php';
+            echo "<p class='text-danger'>Halaman tidak ditemukan.</p>";
         }
         ?>
     </main>
-    <?php include 'view/partials/footer.php'; ?>
+    <?php include __DIR__ . '/view/partials/footer.php'; ?>
 </body>
 </html>

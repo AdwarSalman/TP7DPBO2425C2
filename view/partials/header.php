@@ -20,11 +20,11 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="/TP7DPBO2425C2/view/home.php">Beranda</a></li>
-          <li class="nav-item"><a class="nav-link" href="/TP7DPBO2425C2/view/products.php">Produk</a></li>
-          <li class="nav-item"><a class="nav-link" href="/TP7DPBO2425C2/view/customers.php">Pelanggan</a></li>
-          <li class="nav-item"><a class="nav-link" href="/TP7DPBO2425C2/view/orders.php">Pesanan</a></li>
+         <ul class="navbar-nav me-auto">
+            <li class="nav-item"><a class="nav-link" href="/TP7DPBO2425C2/index.php?page=home">Beranda</a></li>
+            <li class="nav-item"><a class="nav-link" href="/TP7DPBO2425C2/index.php?page=products">Produk</a></li>
+            <li class="nav-item"><a class="nav-link" href="/TP7DPBO2425C2/index.php?page=customers">Pelanggan</a></li>
+            <li class="nav-item"><a class="nav-link" href="/TP7DPBO2425C2/index.php?page=orders">Pesanan</a></li>
         </ul>
       </div>
     </div>

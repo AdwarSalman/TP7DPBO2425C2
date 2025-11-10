@@ -1,64 +1,52 @@
+CREATE DATABASE IF NOT EXISTS electronic_store_v2;
+USE electronic_store_v2;
 
-CREATE DATABASE IF NOT EXISTS toko_electro_demo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE toko_electro_demo;
+CREATE TABLE categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
 
-CREATE TABLE IF NOT EXISTS categories (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL
-) ENGINE=InnoDB;
+CREATE TABLE products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    category_id INT,
+    name VARCHAR(100) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    stock INT NOT NULL DEFAULT 0,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+);
 
-INSERT INTO categories (name) VALUES
-('Smartphone'),
-('Laptop'),
-('Aksesoris'),
-('Audio');
+CREATE TABLE customers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(20)
+);
 
-CREATE TABLE IF NOT EXISTS products (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  category_id INT NOT NULL,
-  description TEXT,
-  price DECIMAL(12,2) NOT NULL DEFAULT 0,
-  stock INT NOT NULL DEFAULT 0,
-  image VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (category_id) REFERENCES categories(id) 
-    ON UPDATE CASCADE ON DELETE RESTRICT
-) ENGINE=InnoDB;
+CREATE TABLE orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total_amount DECIMAL(10,2) DEFAULT 0,
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE RESTRICT
+);
 
-INSERT INTO products (name, category_id, description, price, stock, image) VALUES
-('Smartphone XZ Pro', 1, 'Layar 6.5\" • 8GB RAM • 128GB', 4299000, 12, 'https://via.placeholder.com/300x200?text=Smartphone'),
-('Laptop Ultra 14\"', 2, 'Intel i5 • 16GB RAM • 512GB SSD', 9499000, 5, 'https://via.placeholder.com/300x200?text=Laptop'),
-('Headphone NoiseCancel 700', 4, 'Wireless • ANC • 30 jam', 1899000, 20, 'https://via.placeholder.com/300x200?text=Headphone'),
-('Smart Watch V2', 3, 'Sensor detak jantung • 7 hari baterai', 599000, 30, 'https://via.placeholder.com/300x200?text=Smart+Watch'),
-('Router AX3000', 3, 'WiFi 6 • Dual-band', 799000, 15, 'https://via.placeholder.com/300x200?text=Router'),
-('Speaker Bluetooth 50W', 4, 'Waterproof • 12 jam', 1199000, 8, 'https://via.placeholder.com/300x200?text=Speaker');
+CREATE TABLE order_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
+);
 
+INSERT INTO categories (name) VALUES ('Smartphone'), ('Laptop'), ('Aksesoris');
 
-CREATE TABLE IF NOT EXISTS customers (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL,
-  email VARCHAR(150),
-  phone VARCHAR(50),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+INSERT INTO products (category_id, name, price, stock) VALUES 
+(1, 'Samsung S23 Ultra', 19000000, 10),
+(2, 'MacBook Air M2', 18500000, 5),
+(3, 'Mouse Logitech MX Master', 1500000, 50);
 
-INSERT INTO customers (name, email, phone) VALUES
-('Andi Setiawan', 'andi@example.com', '081234567890'),
-('Budi Hartono', 'budi@example.com', '081298765432'),
-('Citra Dewi', 'citra@example.com', '085612341234');
-
-CREATE TABLE IF NOT EXISTS orders (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  customer_id INT NOT NULL,
-  total DECIMAL(12,2) NOT NULL DEFAULT 0,
-  order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (customer_id) REFERENCES customers(id)
-    ON UPDATE CASCADE ON DELETE CASCADE
-) ENGINE=InnoDB;
-
-INSERT INTO orders (customer_id, total) VALUES
-(1, 4299000),
-(2, 9499000),
-(3, 1899000);
-
+INSERT INTO customers (name, email, phone) VALUES 
+('Budi Santoso', 'budi@gmail.com', '081234567890'),
+('Siti Aminah', 'siti@yahoo.com', '089876543210');

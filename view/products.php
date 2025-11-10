@@ -1,99 +1,96 @@
 <?php
 require_once __DIR__ . '/../class/Product.php';
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../class/Category.php';
 
 $product = new Product();
-$db = (new Database())->conn;
-$categories = $db->query("SELECT * FROM categories")->fetchAll(PDO::FETCH_ASSOC);
+$category = new Category();
+$error_msg = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
-  $product->addProduct($_POST['name'], $_POST['category_id'], $_POST['description'], $_POST['price'], $_POST['stock']);
-  header("Location: products.php"); exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
-  $product->updateProduct($_POST['id'], $_POST['name'], $_POST['category_id'], $_POST['description'], $_POST['price'], $_POST['stock']);
-  header("Location: products.php"); exit;
+// --- HANDLER ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $cat_id = !empty($_POST['category_id']) ? $_POST['category_id'] : null;
+    if (isset($_POST['add'])) {
+        $product->add($_POST['name'], $cat_id, $_POST['price'], $_POST['stock']);
+    } elseif (isset($_POST['edit'])) {
+        $product->update($_POST['id'], $_POST['name'], $cat_id, $_POST['price'], $_POST['stock']);
+    }
+    echo "<script>window.location='index.php?page=products';</script>"; exit;
 }
 
 if (isset($_GET['delete'])) {
-  $product->deleteProduct($_GET['delete']);
-  header("Location: products.php"); exit;
+    try {
+        $product->delete($_GET['delete']);
+        echo "<script>window.location='index.php?page=products';</script>"; exit;
+    } catch (Exception $e) {
+        $error_msg = $e->getMessage();
+    }
 }
 
-$products = $product->getAllProducts();
-include __DIR__ . '/partials/header.php';
+$dataProducts = $product->getAll();
+$categories = $category->getAll();
+$editData = isset($_GET['edit']) ? $product->getById($_GET['edit']) : null;
 ?>
 
-<h3 class="mb-3">Kelola Produk</h3>
+<h2 class="mb-4">📦 Kelola Produk</h2>
+<?php if ($error_msg): ?><div class="alert alert-danger"><?= $error_msg ?></div><?php endif; ?>
 
-<!-- Form Tambah Produk -->
-<form method="POST" class="card card-body mb-4 shadow-sm">
-  <h5>Tambah Produk</h5>
-  <input type="hidden" name="create" value="1">
-  <div class="row mb-2">
-    <div class="col-md-4"><input name="name" class="form-control" placeholder="Nama Produk" required></div>
-    <div class="col-md-3">
-      <select name="category_id" class="form-select" required>
-        <option value="">Pilih Kategori</option>
-        <?php foreach ($categories as $cat): ?>
-          <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
-        <?php endforeach; ?>
-      </select>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="POST" action="index.php?page=products">
+            <?php if ($editData): ?>
+                <input type="hidden" name="edit" value="true">
+                <input type="hidden" name="id" value="<?= $editData['id'] ?>">
+            <?php else: ?>
+                <input type="hidden" name="add" value="true">
+            <?php endif; ?>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label>Nama Produk</label>
+                    <input type="text" name="name" class="form-control" required value="<?= $editData['name'] ?? '' ?>">
+                </div>
+                <div class="col-md-3">
+                    <label>Kategori</label>
+                    <select name="category_id" class="form-select" required>
+                        <option value="">-- Pilih --</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?= $cat['id'] ?>" <?= ($editData && $editData['category_id'] == $cat['id']) ? 'selected' : '' ?>>
+                                <?= $cat['name'] ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Harga</label>
+                    <input type="number" name="price" class="form-control" required value="<?= $editData['price'] ?? '' ?>">
+                </div>
+                <div class="col-md-2">
+                    <label>Stok</label>
+                    <input type="number" name="stock" class="form-control" required value="<?= $editData['stock'] ?? '' ?>">
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-primary"><?= $editData ? 'Update' : 'Simpan' ?></button>
+                <?php if ($editData): ?><a href="index.php?page=products" class="btn btn-secondary">Batal</a><?php endif; ?>
+            </div>
+        </form>
     </div>
-    <div class="col-md-2"><input name="price" type="number" class="form-control" placeholder="Harga" required></div>
-    <div class="col-md-2"><input name="stock" type="number" class="form-control" placeholder="Stok" required></div>
-  </div>
-  <textarea name="description" class="form-control mb-2" placeholder="Deskripsi Produk"></textarea>
-  <button class="btn btn-primary">Tambah</button>
-</form>
+</div>
 
-<!-- Tabel Produk -->
-<table class="table table-striped shadow-sm bg-white">
-  <thead>
-    <tr><th>ID</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr>
-  </thead>
-  <tbody>
-  <?php foreach ($products as $p): ?>
-    <tr>
-      <td><?= $p['id'] ?></td>
-      <td><?= htmlspecialchars($p['name']) ?></td>
-      <td><?= htmlspecialchars($p['category_name']) ?></td>
-      <td>Rp <?= number_format($p['price'],0,',','.') ?></td>
-      <td><?= $p['stock'] ?></td>
-      <td>
-        <a href="products.php?edit=<?= $p['id'] ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-        <a href="products.php?delete=<?= $p['id'] ?>" onclick="return confirm('Yakin hapus produk?')" class="btn btn-sm btn-outline-danger">Hapus</a>
-      </td>
-    </tr>
-  <?php endforeach; ?>
-  </tbody>
+<table class="table table-striped">
+    <thead class="table-dark"><tr><th>No</th><th>Produk</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead>
+    <tbody>
+        <?php $no=1; foreach ($dataProducts as $row): ?>
+        <tr>
+            <td><?= $no++ ?></td>
+            <td><?= htmlspecialchars($row['name']) ?></td>
+            <td><span class="badge bg-info text-dark"><?= $row['category_name'] ?? '-' ?></span></td>
+            <td>Rp <?= number_format($row['price'],0,',','.') ?></td>
+            <td><?= $row['stock'] ?></td>
+            <td>
+                <a href="index.php?page=products&edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
+                <a href="index.php?page=products&delete=<?= $row['id'] ?>" onclick="return confirm('Hapus?')" class="btn btn-sm btn-danger">Hapus</a>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+    </tbody>
 </table>
-
-<!-- Form Edit -->
-<?php if (isset($_GET['edit'])):
-  $edit = $product->getProductById($_GET['edit']); ?>
-  <hr>
-  <form method="POST" class="card card-body shadow-sm mt-3">
-    <h5>Edit Produk ID #<?= $edit['id'] ?></h5>
-    <input type="hidden" name="update" value="1">
-    <input type="hidden" name="id" value="<?= $edit['id'] ?>">
-    <input name="name" class="form-control mb-2" value="<?= htmlspecialchars($edit['name']) ?>" required>
-
-    <select name="category_id" class="form-select mb-2" required>
-      <?php foreach ($categories as $cat): ?>
-        <option value="<?= $cat['id'] ?>" <?= $edit['category_id'] == $cat['id'] ? 'selected' : '' ?>>
-          <?= htmlspecialchars($cat['name']) ?>
-        </option>
-      <?php endforeach; ?>
-    </select>
-
-    <input name="price" class="form-control mb-2" value="<?= $edit['price'] ?>" required>
-    <input name="stock" class="form-control mb-2" value="<?= $edit['stock'] ?>" required>
-    <textarea name="description" class="form-control mb-2"><?= htmlspecialchars($edit['description']) ?></textarea>
-
-    <button class="btn btn-primary">Simpan Perubahan</button>
-  </form>
-<?php endif; ?>
-
-<?php include __DIR__ . '/partials/footer.php'; ?>

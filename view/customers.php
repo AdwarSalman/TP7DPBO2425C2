@@ -1,69 +1,68 @@
 <?php
 require_once __DIR__ . '/../class/Customer.php';
 $customer = new Customer();
+$error_msg = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create'])) {
-  $customer->addCustomer($_POST['name'], $_POST['email'], $_POST['phone']);
-  header("Location: customers.php"); exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
-  $customer->updateCustomer($_POST['id'], $_POST['name'], $_POST['email'], $_POST['phone']);
-  header("Location: customers.php"); exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['add'])) {
+        $customer->add($_POST['name'], $_POST['email'], $_POST['phone']);
+    } elseif (isset($_POST['edit'])) {
+        $customer->update($_POST['id'], $_POST['name'], $_POST['email'], $_POST['phone']);
+    }
+    echo "<script>window.location='index.php?page=customers';</script>"; exit;
 }
 
 if (isset($_GET['delete'])) {
-  $customer->deleteCustomer($_GET['delete']);
-  header("Location: customers.php"); exit;
+    try {
+        $customer->delete($_GET['delete']);
+        echo "<script>window.location='index.php?page=customers';</script>"; exit;
+    } catch (Exception $e) {
+        $error_msg = $e->getMessage();
+    }
 }
 
-$customers = $customer->getAllCustomers();
-include __DIR__ . '/partials/header.php';
+$dataCustomers = $customer->getAll();
+$editData = isset($_GET['edit']) ? $customer->getById($_GET['edit']) : null;
 ?>
 
-<h3 class="mb-3">Kelola Pelanggan</h3>
+<h2 class="mb-4">👥 Kelola Pelanggan</h2>
+<?php if ($error_msg): ?><div class="alert alert-danger"><?= $error_msg ?></div><?php endif; ?>
 
-<form method="POST" class="card card-body mb-4 shadow-sm">
-  <h5>Tambah Pelanggan</h5>
-  <input type="hidden" name="create" value="1">
-  <div class="row mb-2">
-    <div class="col-md-4"><input name="name" class="form-control" placeholder="Nama" required></div>
-    <div class="col-md-4"><input name="email" type="email" class="form-control" placeholder="Email"></div>
-    <div class="col-md-4"><input name="phone" class="form-control" placeholder="Nomor Telepon"></div>
-  </div>
-  <button class="btn btn-primary">Tambah</button>
-</form>
-
-<table class="table table-striped bg-white shadow-sm">
-  <thead><tr><th>ID</th><th>Nama</th><th>Email</th><th>Telepon</th><th>Aksi</th></tr></thead>
-  <tbody>
-  <?php foreach ($customers as $c): ?>
-    <tr>
-      <td><?= $c['id'] ?></td>
-      <td><?= htmlspecialchars($c['name']) ?></td>
-      <td><?= htmlspecialchars($c['email']) ?></td>
-      <td><?= htmlspecialchars($c['phone']) ?></td>
-      <td>
-        <a href="customers.php?edit=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary">Edit</a>
-        <a href="customers.php?delete=<?= $c['id'] ?>" onclick="return confirm('Yakin hapus pelanggan?')" class="btn btn-sm btn-outline-danger">Hapus</a>
-      </td>
-    </tr>
-  <?php endforeach; ?>
-  </tbody>
-</table>
-
-<?php if (isset($_GET['edit'])):
-  $edit = $customer->getCustomerById($_GET['edit']); ?>
-  <hr>
-  <form method="POST" class="card card-body shadow-sm mt-3">
-    <h5>Edit Pelanggan ID #<?= $edit['id'] ?></h5>
-    <input type="hidden" name="update" value="1">
-    <input type="hidden" name="id" value="<?= $edit['id'] ?>">
-    <input name="name" class="form-control mb-2" value="<?= htmlspecialchars($edit['name']) ?>" required>
-    <input name="email" class="form-control mb-2" value="<?= htmlspecialchars($edit['email']) ?>">
-    <input name="phone" class="form-control mb-2" value="<?= htmlspecialchars($edit['phone']) ?>">
-    <button class="btn btn-primary">Simpan Perubahan</button>
-  </form>
-<?php endif; ?>
-
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="POST" action="index.php?page=customers">
+                    <?php if ($editData): ?>
+                        <input type="hidden" name="edit" value="true"><input type="hidden" name="id" value="<?= $editData['id'] ?>">
+                    <?php else: ?>
+                        <input type="hidden" name="add" value="true">
+                    <?php endif; ?>
+                    <div class="mb-2"><label>Nama</label><input name="name" class="form-control" required value="<?= $editData['name'] ?? '' ?>"></div>
+                    <div class="mb-2"><label>Email</label><input name="email" class="form-control" value="<?= $editData['email'] ?? '' ?>"></div>
+                    <div class="mb-3"><label>HP</label><input name="phone" class="form-control" required value="<?= $editData['phone'] ?? '' ?>"></div>
+                    <button class="btn btn-primary w-100"><?= $editData ? 'Update' : 'Tambah' ?></button>
+                    <?php if ($editData): ?><a href="index.php?page=customers" class="btn btn-secondary w-100 mt-2">Batal</a><?php endif; ?>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <table class="table table-striped">
+            <thead class="table-dark"><tr><th>No</th><th>Nama</th><th>Kontak</th><th>Aksi</th></tr></thead>
+            <tbody>
+                <?php $no=1; foreach ($dataCustomers as $row): ?>
+                <tr>
+                    <td><?= $no++ ?></td>
+                    <td><?= htmlspecialchars($row['name']) ?></td>
+                    <td><?= $row['email'] ?><br><?= $row['phone'] ?></td>
+                    <td>
+                        <a href="index.php?page=customers&edit=<?= $row['id'] ?>" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="index.php?page=customers&delete=<?= $row['id'] ?>" onclick="return confirm('Hapus?')" class="btn btn-sm btn-danger">Hapus</a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>

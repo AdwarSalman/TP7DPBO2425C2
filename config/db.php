@@ -1,20 +1,20 @@
 <?php
 class Database {
     private $host = "localhost";
+    private $db_name = "electronic_store_v2"; // NAMA DATABASE BARU
     private $username = "root";
     private $password = "";
-    private $dbname = "toko_electro_demo";
     public $conn;
 
-    public function __construct() {
+    public function getConnection() {
+        $this->conn = null;
         try {
-            $this->conn = new PDO("mysql:host=$this->host;dbname=$this->dbname;charset=utf8mb4", 
-                                   $this->username, 
-                                   $this->password);
+            $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            echo "Koneksi gagal: " . $e->getMessage();
+        } catch(PDOException $e) {
+            die("Koneksi Gagal: " . $e->getMessage());
         }
+        return $this->conn;
     }
 }
 ?>
