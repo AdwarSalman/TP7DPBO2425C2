@@ -96,4 +96,5 @@ Sistem ini menggunakan 5 tabel yang saling berelasi:
 
 ## 📸 Dokumentasi
 
-*(Tambahkan screenshot aplikasi Anda di sini)*
+https://github.com/user-attachments/assets/adeb4e00-0a33-478d-8c87-4cbbb76577dc
+
